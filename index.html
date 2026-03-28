@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>Monitor 208 | Fácil Digitação</title>
+<title>Monitor 208 | Preços Rápidos</title>
 <style>
     * {
         margin: 0;
@@ -35,7 +35,6 @@
         padding: 12px 10px 18px 10px;
         scroll-behavior: smooth;
         border: 1px solid rgba(0, 224, 255, 0.2);
-        position: relative;
     }
 
     .dashboard::-webkit-scrollbar {
@@ -68,7 +67,6 @@
         background-clip: text;
         -webkit-background-clip: text;
         color: transparent;
-        letter-spacing: -0.3px;
     }
     .sub-info {
         font-size: 0.55rem;
@@ -86,7 +84,6 @@
         padding: 10px 12px;
         margin-bottom: 10px;
         border: 1px solid rgba(0, 224, 255, 0.2);
-        transition: all 0.2s;
     }
     .card-title {
         font-size: 0.65rem;
@@ -136,7 +133,39 @@
         box-shadow: 0 0 6px rgba(0,224,255,0.3);
     }
     
-    /* Botões de atalho para ponto decimal */
+    /* Botões de preço rápido */
+    .price-buttons {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-top: 6px;
+        margin-bottom: 4px;
+        justify-content: center;
+    }
+    .btn-price {
+        background: linear-gradient(135deg, #1f2a3e, #152032);
+        border: 1px solid #3a4a6e;
+        border-radius: 25px;
+        padding: 6px 10px;
+        font-size: 0.65rem;
+        font-weight: bold;
+        color: #00e0ff;
+        cursor: pointer;
+        transition: all 0.2s;
+        min-width: 55px;
+    }
+    .btn-price:active {
+        background: #00e0ff;
+        color: #000;
+        transform: scale(0.95);
+    }
+    .btn-price-active {
+        background: #00e0ff;
+        color: #000;
+        border-color: #00e0ff;
+    }
+    
+    /* Botões de atalho decimal */
     .decimal-buttons {
         display: flex;
         gap: 4px;
@@ -256,7 +285,6 @@
         background: #00aa4411;
         color: #88ffaa;
     }
-    .dashboard { -webkit-overflow-scrolling: touch; }
     
     .button-group {
         display: flex;
@@ -267,12 +295,21 @@
         flex: 1;
     }
     
-    /* Dica visual */
     .tip {
         font-size: 0.45rem;
         text-align: center;
         color: #5c6a8a;
         margin-top: 3px;
+    }
+    
+    .current-price {
+        background: #00e0ff20;
+        border-radius: 20px;
+        padding: 4px;
+        text-align: center;
+        margin-top: 4px;
+        font-size: 0.6rem;
+        color: #00e0ff;
     }
 </style>
 </head>
@@ -301,18 +338,32 @@
                 <input type="number" id="kmFinal" class="input-mini" placeholder="0" step="0.1" inputmode="decimal">
             </div>
         </div>
+        
+        <!-- PREÇO DO COMBUSTÍVEL COM BOTÕES RÁPIDOS -->
+        <div class="input-group-sm" style="width: 100%; margin-bottom: 5px;">
+            <label>💰 PREÇO DO COMBUSTÍVEL (R$/L)</label>
+            <input type="number" id="precoCombustivel" class="input-mini" placeholder="5.79" step="0.01" inputmode="decimal">
+        </div>
+        
+        <!-- Botões de preço rápido (5.60 até 7.00) -->
+        <div class="price-buttons" id="priceButtons">
+            <button class="btn-price" data-price="5.60">R$ 5,60</button>
+            <button class="btn-price" data-price="5.80">R$ 5,80</button>
+            <button class="btn-price" data-price="6.00">R$ 6,00</button>
+            <button class="btn-price" data-price="6.20">R$ 6,20</button>
+            <button class="btn-price" data-price="6.40">R$ 6,40</button>
+            <button class="btn-price" data-price="6.60">R$ 6,60</button>
+            <button class="btn-price" data-price="6.80">R$ 6,80</button>
+            <button class="btn-price" data-price="7.00">R$ 7,00</button>
+        </div>
+        
+        <div class="current-price" id="currentPriceDisplay">
+            💰 Preço atual: R$ --
+        </div>
+        
         <div class="input-row">
             <div class="input-group-sm">
-                <label>💰 PREÇO (R$/L)</label>
-                <input type="number" id="precoCombustivel" class="input-mini" placeholder="5.79" step="0.01" inputmode="decimal">
-                <div class="decimal-buttons">
-                    <button class="btn-decimal" data-target="precoCombustivel" data-value=".">•</button>
-                    <button class="btn-decimal" data-target="precoCombustivel" data-value="0">0</button>
-                    <button class="btn-decimal" data-target="precoCombustivel" data-value="00">00</button>
-                </div>
-            </div>
-            <div class="input-group-sm">
-                <label>⛽ VALOR GASTO (R$)</label>
+                <label>⛽ VALOR TOTAL GASTO (R$)</label>
                 <input type="number" id="valorGasto" class="input-mini" placeholder="150.00" step="0.01" inputmode="decimal">
                 <div class="decimal-buttons">
                     <button class="btn-decimal" data-target="valorGasto" data-value=".">•</button>
@@ -321,8 +372,10 @@
                 </div>
             </div>
         </div>
-        <div class="tip">💡 Dica: use os botões • para colocar ponto decimal</div>
-        <div class="result-block" id="consumoResult">
+        
+        <div class="tip">💡 Dica: Toque nos botões de preço acima para selecionar rapidamente!</div>
+        
+        <div class="result-block">
             <div class="result-line"><span>📏 Distância</span><span class="result-value" id="distanciaVal">0 km</span></div>
             <div class="result-line"><span>⛽ Litros</span><span class="result-value" id="litrosVal">0.00 L</span></div>
             <div class="result-line"><span>📈 CONSUMO</span><span class="result-value highlight-value" id="consumoCalculado">-- km/L</span></div>
@@ -400,7 +453,7 @@
         <div id="pneusMsg" class="alert-msg" style="display: none;"></div>
     </div>
 
-    <!-- CARD 4: Resumo geral e botão limpar -->
+    <!-- CARD 4: Resumo geral -->
     <div class="card">
         <div class="card-title"><span>⚠️</span> ALERTAS</div>
         <div id="resumoAlertas" style="font-size:0.6rem; color:#b8c7ff; text-align:center; padding: 5px;">✅ Todos os sistemas OK</div>
@@ -408,13 +461,61 @@
             <button class="btn-action btn-clear" id="clearDataBtn">🗑️ LIMPAR DADOS</button>
         </div>
         <div style="font-size:0.45rem; text-align:center; color:#5c6a8a; margin-top:6px;">
-            💾 Dados salvos automáticos | 🔘 Use os botões • para decimal
+            💾 Dados salvos | 🔘 Toque no preço desejado
         </div>
     </div>
 </div>
 
 <script>
-    // ==================== BOTÕES DE ATALHO PARA PONTO DECIMAL ====================
+    // ==================== BOTÕES DE PREÇO RÁPIDO ====================
+    function setupPriceButtons() {
+        const priceButtons = document.querySelectorAll('.btn-price');
+        const precoInput = document.getElementById('precoCombustivel');
+        const priceDisplay = document.getElementById('currentPriceDisplay');
+        
+        priceButtons.forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                const price = this.getAttribute('data-price');
+                precoInput.value = price;
+                
+                // Atualizar display
+                priceDisplay.innerHTML = `💰 Preço atual: R$ ${price}`;
+                
+                // Remover destaque de todos
+                priceButtons.forEach(b => b.classList.remove('btn-price-active'));
+                // Destacar o selecionado
+                this.classList.add('btn-price-active');
+                
+                // Disparar evento para recalcular
+                const event = new Event('input', { bubbles: true });
+                precoInput.dispatchEvent(event);
+                
+                // Salvar automaticamente
+                salvarTodosDados();
+            });
+        });
+        
+        // Monitorar mudanças manuais no input
+        precoInput.addEventListener('input', function() {
+            const val = this.value;
+            if (val) {
+                priceDisplay.innerHTML = `💰 Preço atual: R$ ${val}`;
+                // Remover destaque dos botões
+                priceButtons.forEach(b => b.classList.remove('btn-price-active'));
+                // Se o valor corresponder a algum botão, destaca
+                priceButtons.forEach(btn => {
+                    if (btn.getAttribute('data-price') === val) {
+                        btn.classList.add('btn-price-active');
+                    }
+                });
+            } else {
+                priceDisplay.innerHTML = `💰 Preço atual: R$ --`;
+            }
+        });
+    }
+    
+    // ==================== BOTÕES DECIMAIS ====================
     function setupDecimalButtons() {
         const buttons = document.querySelectorAll('.btn-decimal');
         buttons.forEach(btn => {
@@ -427,7 +528,6 @@
                     let currentValue = input.value;
                     
                     if (valueToAdd === '.') {
-                        // Adicionar ponto decimal se não existir
                         if (!currentValue.includes('.')) {
                             if (currentValue === '') {
                                 input.value = '0.';
@@ -436,7 +536,6 @@
                             }
                         }
                     } else if (valueToAdd === '0' || valueToAdd === '00') {
-                        // Adicionar zeros
                         if (currentValue === '' || currentValue === '0') {
                             input.value = valueToAdd;
                         } else {
@@ -444,7 +543,6 @@
                         }
                     }
                     
-                    // Disparar evento para atualizar cálculos
                     const event = new Event('input', { bubbles: true });
                     input.dispatchEvent(event);
                     input.focus();
@@ -453,7 +551,7 @@
         });
     }
     
-    // ==================== LOCALSTORAGE KEYS ====================
+    // ==================== LOCALSTORAGE ====================
     const STORAGE_KEYS = {
         kmInicial: 'consumo_kmInicial',
         kmFinal: 'consumo_kmFinal',
@@ -496,6 +594,21 @@
                 }
             }
         }
+        // Atualizar display do preço
+        const precoInput = document.getElementById('precoCombustivel');
+        const priceDisplay = document.getElementById('currentPriceDisplay');
+        if (precoInput.value) {
+            priceDisplay.innerHTML = `💰 Preço atual: R$ ${precoInput.value}`;
+            // Destacar botão correspondente
+            const priceButtons = document.querySelectorAll('.btn-price');
+            priceButtons.forEach(btn => {
+                if (btn.getAttribute('data-price') === precoInput.value) {
+                    btn.classList.add('btn-price-active');
+                } else {
+                    btn.classList.remove('btn-price-active');
+                }
+            });
+        }
     }
     
     function limparTodosDados() {
@@ -517,19 +630,16 @@
             document.getElementById('pressaoIdeal').value = '33';
             document.getElementById('tolerancia').value = '3';
             
+            document.getElementById('currentPriceDisplay').innerHTML = '💰 Preço atual: R$ --';
+            document.querySelectorAll('.btn-price').forEach(btn => btn.classList.remove('btn-price-active'));
+            
             calcularConsumoReal();
             verificarOleo();
             verificarPressaoPneus();
-            
-            const saveStatus = document.getElementById('saveStatus');
-            if (saveStatus) saveStatus.innerHTML = '🗑️ Limpo';
-            setTimeout(() => {
-                if (saveStatus) saveStatus.innerHTML = 'Dados salvos';
-            }, 2000);
         }
     }
     
-    // ==================== CÁLCULO DE CONSUMO ====================
+    // ==================== CÁLCULOS ====================
     function calcularConsumoReal() {
         const kmIni = parseFloat(document.getElementById('kmInicial').value);
         const kmFin = parseFloat(document.getElementById('kmFinal').value);
@@ -578,7 +688,7 @@
             
             if (consumo < 8) {
                 consumoMsg.style.display = "block";
-                consumoMsg.innerHTML = "⚠️ Consumo elevado!";
+                consumoMsg.innerHTML = "⚠️ Consumo elevado! Verifique manutenção.";
                 consumoMsg.className = "alert-msg";
             } else if (consumo < 11) {
                 consumoMsg.style.display = "block";
@@ -591,14 +701,10 @@
             } else {
                 consumoMsg.style.display = "none";
             }
-        } else {
-            consumoCalculadoSpan.innerText = "Erro";
-            custoKmSpan.innerText = "R$ --";
         }
         salvarTodosDados();
     }
     
-    // ==================== ÓLEO ====================
     function verificarOleo() {
         const kmAtual = parseFloat(document.getElementById('kmAtualOleo').value);
         const ultimaTroca = parseFloat(document.getElementById('ultimaTrocaOleo').value);
@@ -639,7 +745,6 @@
         }
         
         if (nivel === "baixo") msg = "🛢️ Nível de óleo BAIXO!";
-        else if (nivel === "medio" && msg === "") msg = "📊 Nível médio, monitore";
         
         if (msg) {
             msgDiv.style.display = "block";
@@ -651,7 +756,6 @@
         atualizarResumoAlertas();
     }
     
-    // ==================== PNEUS ====================
     function verificarPressaoPneus() {
         const pneus = [
             { id: document.getElementById('pressaoDE'), span: document.getElementById('pneuDE') },
@@ -662,17 +766,17 @@
         const ideal = parseFloat(document.getElementById('pressaoIdeal').value) || 33;
         const toleranciaPsi = parseFloat(document.getElementById('tolerancia').value) || 3;
         
-        const alertas = [];
+        let alertasCount = 0;
         
         pneus.forEach(pneu => {
             const valor = parseFloat(pneu.id.value);
             if (!isNaN(valor) && valor > 0) {
                 if (valor < ideal - toleranciaPsi) {
                     pneu.span.innerHTML = `<span class="danger">${valor}↓</span>`;
-                    alertas.push("baixa");
+                    alertasCount++;
                 } else if (valor > ideal + toleranciaPsi) {
                     pneu.span.innerHTML = `<span class="warning">${valor}↑</span>`;
-                    alertas.push("alta");
+                    alertasCount++;
                 } else {
                     pneu.span.innerHTML = `<span class="good">${valor}</span>`;
                 }
@@ -682,9 +786,9 @@
         });
         
         const msgDiv = document.getElementById('pneusMsg');
-        if (alertas.length > 0) {
+        if (alertasCount > 0) {
             msgDiv.style.display = "block";
-            msgDiv.innerHTML = `⚠️ ${alertas.length} pneu(s) fora do ideal`;
+            msgDiv.innerHTML = `⚠️ ${alertasCount} pneu(s) fora do ideal`;
         } else {
             msgDiv.style.display = "none";
         }
@@ -692,7 +796,6 @@
         atualizarResumoAlertas();
     }
     
-    // ==================== RESUMO ====================
     function atualizarResumoAlertas() {
         let alertas = [];
         
@@ -749,11 +852,11 @@
     
     window.addEventListener('DOMContentLoaded', () => {
         carregarTodosDados();
+        setupPriceButtons();
         setupDecimalButtons();
         calcularConsumoReal();
         verificarOleo();
         verificarPressaoPneus();
-        atualizarResumoAlertas();
     });
 </script>
 </body>
