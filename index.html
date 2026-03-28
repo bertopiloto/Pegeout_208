@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Monitor 208 | Dados Salvos Automático</title>
+<style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+        background: #03060c;
+        font-family: 'Segoe UI', 'Poppins', system-ui, -apple-system, sans-serif;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        padding: 4px;
+    }
+
+    .dashboard {
+        width: 100%;
+        max-width: 360px;
+        height: auto;
+        max-height: 98vh;
+        background: radial-gradient(ellipse at 30% 20%, #0b1120, #03060c);
+        border-radius: 28px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.05);
+        overflow-y: auto;
+        overflow-x: hidden;
+        padding: 12px 10px 18px 10px;
+        scroll-behavior: smooth;
+        border: 1px solid rgba(0, 224, 255, 0.2);
+        position: relative;
+    }
+
+    .dashboard::-webkit-scrollbar {
+        width: 3px;
+    }
+    .dashboard::-webkit-scrollbar-track {
+        background: #1a1f2c;
+        border-radius: 10px;
+    }
+    .dashboard::-webkit-scrollbar-thumb {
+        background: #00e0ff;
+        border-radius: 10px;
+    }
+
+    .vehicle-header {
+        text-align: center;
+        margin-bottom: 12px;
+        position: sticky;
+        top: 0;
+        background: rgba(5, 8, 15, 0.85);
+        backdrop-filter: blur(8px);
+        border-radius: 40px;
+        padding: 6px 8px;
+        z-index: 10;
+    }
+    .model-badge {
+        font-size: 1rem;
+        font-weight: 800;
+        background: linear-gradient(135deg, #fff, #00e0ff);
+        background-clip: text;
+        -webkit-background-clip: text;
+        color: transparent;
+        letter-spacing: -0.3px;
+    }
+    .sub-info {
+        font-size: 0.55rem;
+        color: #7e8aa8;
+        display: flex;
+        justify-content: center;
+        gap: 12px;
+        margin-top: 2px;
+    }
+    .save-indicator {
+        font-size: 0.5rem;
+        background: #00aa4433;
+        padding: 2px 6px;
+        border-radius: 20px;
+        display: inline-block;
+    }
+
+    .card {
+        background: rgba(12, 18, 28, 0.65);
+        backdrop-filter: blur(4px);
+        border-radius: 22px;
+        padding: 10px 12px;
+        margin-bottom: 10px;
+        border: 1px solid rgba(0, 224, 255, 0.2);
+        transition: all 0.2s;
+    }
+    .card-title {
+        font-size: 0.65rem;
+        text-transform: uppercase;
+        font-weight: 600;
+        letter-spacing: 1.2px;
+        color: #5bc0ff;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-bottom: 8px;
+        border-left: 2px solid #00e0ff;
+        padding-left: 8px;
+    }
+    .input-row {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 8px;
+        flex-wrap: wrap;
+    }
+    .input-group-sm {
+        flex: 1;
+        min-width: 70px;
+    }
+    .input-group-sm label {
+        font-size: 0.5rem;
+        color: #9aabcf;
+        display: block;
+        margin-bottom: 2px;
+    }
+    .input-mini {
+        width: 100%;
+        background: #0c1120;
+        border: 1px solid #2a3452;
+        border-radius: 16px;
+        padding: 8px 5px;
+        font-size: 0.7rem;
+        color: #eef5ff;
+        text-align: center;
+        font-weight: 500;
+        outline: none;
+    }
+    .input-mini:focus {
+        border-color: #00e0ff;
+        box-shadow: 0 0 6px rgba(0,224,255,0.3);
+    }
+    select.input-mini {
+        cursor: pointer;
+    }
+
+    .status-grid {
+        display: flex;
+        gap: 8px;
+        margin-top: 5px;
+        flex-wrap: wrap;
+    }
+    .status-item {
+        flex: 1;
+        min-width: 65px;
+        background: #0a0f1a;
+        border-radius: 20px;
+        padding: 8px 4px;
+        text-align: center;
+    }
+    .status-label {
+        font-size: 0.55rem;
+        color: #8d9dcc;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+    }
+    .status-value {
+        font-size: 0.85rem;
+        font-weight: 800;
+        margin-top: 4px;
+        display: flex;
+        align-items: baseline;
+        justify-content: center;
+        gap: 3px;
+    }
+    .good { color: #2effb0; text-shadow: 0 0 2px #00aa66; }
+    .warning { color: #ffb347; }
+    .danger { color: #ff5a5a; }
+
+    .btn-action {
+        background: linear-gradient(95deg, #0088ff, #00ccff);
+        border: none;
+        border-radius: 36px;
+        padding: 10px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: white;
+        width: 100%;
+        margin: 6px 0 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        cursor: pointer;
+    }
+    .btn-action:active { transform: scale(0.98); }
+    .btn-clear {
+        background: linear-gradient(95deg, #ff4444, #aa2222);
+        margin-top: 0;
+    }
+    .btn-clear:active { transform: scale(0.98); }
+
+    .result-block {
+        background: #03070fcc;
+        border-radius: 20px;
+        padding: 8px;
+        margin-top: 6px;
+    }
+    .result-line {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.65rem;
+        padding: 4px 0;
+        border-bottom: 1px dashed #2a3455;
+    }
+    .result-value {
+        font-weight: 700;
+        color: #00f2ff;
+    }
+    .highlight-value {
+        color: #ffd966;
+        font-size: 0.8rem;
+    }
+
+    .alert-msg {
+        font-size: 0.6rem;
+        text-align: center;
+        padding: 5px;
+        background: #ff660011;
+        border-radius: 40px;
+        margin-top: 5px;
+        color: #ffaa66;
+    }
+    .success-msg {
+        background: #00aa4411;
+        color: #88ffaa;
+    }
+    .dashboard { -webkit-overflow-scrolling: touch; }
+    
+    .button-group {
+        display: flex;
+        gap: 8px;
+        margin-top: 5px;
+    }
+    .button-group .btn-action {
+        flex: 1;
+    }
+</style>
+</head>
+<body>
+<div class="dashboard">
+    <div class="vehicle-header">
+        <div class="model-badge">⚡ PEUGEOT 208 ✦</div>
+        <div class="sub-info">
+            <span>📟 1.47" display</span>
+            <span>💾 <span id="saveStatus">Dados salvos</span></span>
+        </div>
+    </div>
+
+    <!-- CARD 1: CONSUMO -->
+    <div class="card">
+        <div class="card-title">
+            <span>⛽</span> CONSUMO REAL (calculado)
+        </div>
+        <div class="input-row">
+            <div class="input-group-sm">
+                <label>📊 KM INICIAL</label>
+                <input type="number" id="kmInicial" class="input-mini" placeholder="0" step="0.1">
+            </div>
+            <div class="input-group-sm">
+                <label>📍 KM FINAL</label>
+                <input type="number" id="kmFinal" class="input-mini" placeholder="0" step="0.1">
+            </div>
+        </div>
+        <div class="input-row">
+            <div class="input-group-sm">
+                <label>💰 PREÇO (R$/L)</label>
+                <input type="number" id="precoCombustivel" class="input-mini" placeholder="5.79" step="0.01">
+            </div>
+            <div class="input-group-sm">
+                <label>⛽ VALOR TOTAL GASTO (R$)</label>
+                <input type="number" id="valorGasto" class="input-mini" placeholder="Ex: 150.00" step="0.01">
+            </div>
+        </div>
+        <div class="result-block" id="consumoResult">
+            <div class="result-line"><span>📏 Distância percorrida</span><span class="result-value" id="distanciaVal">0 km</span></div>
+            <div class="result-line"><span>⛽ Litros abastecidos</span><span class="result-value" id="litrosVal">0.00 L</span></div>
+            <div class="result-line"><span>📈 CONSUMO (km/L)</span><span class="result-value highlight-value" id="consumoCalculado">-- km/L</span></div>
+            <div class="result-line"><span>💰 Custo por km</span><span class="result-value" id="custoKmVal">R$ 0.00</span></div>
+        </div>
+        <button class="btn-action" id="calcConsumoBtn">🔄 CALCULAR CONSUMO</button>
+        <div id="consumoMsg" class="alert-msg" style="display: none;"></div>
+    </div>
+
+    <!-- CARD 2: ÓLEO DO MOTOR -->
+    <div class="card">
+        <div class="card-title">
+            <span>🛢️</span> ÓLEO DO MOTOR
+        </div>
+        <div class="status-grid">
+            <div class="status-item">
+                <div class="status-label">🔧 NÍVEL</div>
+                <div class="status-value" id="oleoNivel">--</div>
+            </div>
+            <div class="status-item">
+                <div class="status-label">⏱️ KM DESDE TROCA</div>
+                <div class="status-value" id="oleoKmTroca">--</div>
+            </div>
+            <div class="status-item">
+                <div class="status-label">📊 SAÚDE</div>
+                <div class="status-value" id="oleoSaude">⚠️</div>
+            </div>
+        </div>
+        <div class="input-row">
+            <div class="input-group-sm">
+                <label>KM ATUAL (odômetro)</label>
+                <input type="number" id="kmAtualOleo" class="input-mini" placeholder="ex: 25000">
+            </div>
+            <div class="input-group-sm">
+                <label>KM ÚLTIMA TROCA</label>
+                <input type="number" id="ultimaTrocaOleo" class="input-mini" placeholder="ex: 20000">
+            </div>
+        </div>
+        <div class="input-row">
+            <div class="input-group-sm">
+                <label>🔍 NÍVEL DO ÓLEO</label>
+                <select id="nivelOleo" class="input-mini">
+                    <option value="ideal">✅ Ideal (máx)</option>
+                    <option value="medio">⚠️ Médio / atentar</option>
+                    <option value="baixo">❌ Baixo - completar</option>
+                </select>
+            </div>
+        </div>
+        <button class="btn-action" id="verificarOleoBtn">🔧 VERIFICAR ÓLEO</button>
+        <div id="oleoMsg" class="alert-msg" style="display: none;"></div>
+    </div>
+
+    <!-- CARD 3: PRESSÃO DOS PNEUS -->
+    <div class="card">
+        <div class="card-title">
+            <span>🛞</span> PRESSÃO DOS PNEUS
+        </div>
+        <div class="status-grid">
+            <div class="status-item"><div class="status-label">🚗 D. ESQ</div><div class="status-value" id="pneuDE">-- psi</div></div>
+            <div class="status-item"><div class="status-label">🚗 D. DIR</div><div class="status-value" id="pneuDD">-- psi</div></div>
+            <div class="status-item"><div class="status-label">🚙 T. ESQ</div><div class="status-value" id="pneuTE">-- psi</div></div>
+            <div class="status-item"><div class="status-label">🚙 T. DIR</div><div class="status-value" id="pneuTD">-- psi</div></div>
+        </div>
+        <div class="input-row">
+            <div class="input-group-sm"><label>DIANT. ESQ (psi)</label><input type="number" id="pressaoDE" class="input-mini" placeholder="32"></div>
+            <div class="input-group-sm"><label>DIANT. DIR (psi)</label><input type="number" id="pressaoDD" class="input-mini" placeholder="32"></div>
+            <div class="input-group-sm"><label>TRAS. ESQ (psi)</label><input type="number" id="pressaoTE" class="input-mini" placeholder="30"></div>
+            <div class="input-group-sm"><label>TRAS. DIR (psi)</label><input type="number" id="pressaoTD" class="input-mini" placeholder="30"></div>
+        </div>
+        <div class="input-row">
+            <div class="input-group-sm"><label>🎯 PRESSÃO IDEAL</label><input type="number" id="pressaoIdeal" class="input-mini" value="33"></div>
+            <div class="input-group-sm"><label>🔁 TOLERÂNCIA (±)</label><input type="number" id="tolerancia" class="input-mini" value="3"></div>
+        </div>
+        <button class="btn-action" id="verificarPneusBtn">🛞 VERIFICAR PRESSÃO</button>
+        <div id="pneusMsg" class="alert-msg" style="display: none;"></div>
+    </div>
+
+    <!-- CARD 4: Resumo geral e botão limpar -->
+    <div class="card">
+        <div class="card-title"><span>⚠️</span> ALERTAS & RECOMENDAÇÕES</div>
+        <div id="resumoAlertas" style="font-size:0.6rem; color:#b8c7ff; text-align:center; padding: 5px;">✅ Todos os sistemas OK</div>
+        <div class="button-group">
+            <button class="btn-action" id="clearDataBtn">🗑️ LIMPAR TODOS DADOS</button>
+        </div>
+        <div style="font-size:0.5rem; text-align:center; color:#5c6a8a; margin-top:8px;">
+            💾 Dados salvos automaticamente no navegador
+        </div>
+    </div>
+</div>
+
+<script>
+    // ==================== LOCALSTORAGE KEYS ====================
+    const STORAGE_KEYS = {
+        kmInicial: 'consumo_kmInicial',
+        kmFinal: 'consumo_kmFinal',
+        precoCombustivel: 'consumo_preco',
+        valorGasto: 'consumo_valorGasto',
+        kmAtualOleo: 'oleo_kmAtual',
+        ultimaTrocaOleo: 'oleo_ultimaTroca',
+        nivelOleo: 'oleo_nivel',
+        pressaoDE: 'pneu_DE',
+        pressaoDD: 'pneu_DD',
+        pressaoTE: 'pneu_TE',
+        pressaoTD: 'pneu_TD',
+        pressaoIdeal: 'pneu_ideal',
+        tolerancia: 'pneu_tolerancia'
+    };
+    
+    // ==================== FUNÇÕES DE SALVAR/CARREGAR ====================
+    function salvarTodosDados() {
+        for (const [id, key] of Object.entries(STORAGE_KEYS)) {
+            const elemento = document.getElementById(id);
+            if (elemento) {
+                let valor = elemento.value;
+                // Para selects, salva o valor selecionado
+                if (elemento.tagName === 'SELECT') {
+                    localStorage.setItem(key, valor);
+                } else {
+                    localStorage.setItem(key, valor);
+                }
+            }
+        }
+        // Atualizar indicador de salvamento
+        const saveStatus = document.getElementById('saveStatus');
+        if (saveStatus) {
+            saveStatus.innerHTML = '💾 Salvo!';
+            setTimeout(() => {
+                if (saveStatus) saveStatus.innerHTML = 'Dados salvos';
+            }, 1500);
+        }
+    }
+    
+    function carregarTodosDados() {
+        for (const [id, key] of Object.entries(STORAGE_KEYS)) {
+            const elemento = document.getElementById(id);
+            if (elemento) {
+                const valorSalvo = localStorage.getItem(key);
+                if (valorSalvo !== null && valorSalvo !== "") {
+                    elemento.value = valorSalvo;
+                }
+            }
+        }
+    }
+    
+    function limparTodosDados() {
+        if (confirm("⚠️ Tem certeza que deseja LIMPAR TODOS os dados salvos?\n\nEssa ação não pode ser desfeita.")) {
+            for (const key of Object.values(STORAGE_KEYS)) {
+                localStorage.removeItem(key);
+            }
+            // Resetar todos os campos para vazio/default
+            document.getElementById('kmInicial').value = '';
+            document.getElementById('kmFinal').value = '';
+            document.getElementById('precoCombustivel').value = '';
+            document.getElementById('valorGasto').value = '';
+            document.getElementById('kmAtualOleo').value = '';
+            document.getElementById('ultimaTrocaOleo').value = '';
+            document.getElementById('nivelOleo').value = 'ideal';
+            document.getElementById('pressaoDE').value = '';
+            document.getElementById('pressaoDD').value = '';
+            document.getElementById('pressaoTE').value = '';
+            document.getElementById('pressaoTD').value = '';
+            document.getElementById('pressaoIdeal').value = '33';
+            document.getElementById('tolerancia').value = '3';
+            
+            // Recalcular tudo
+            calcularConsumoReal();
+            verificarOleo();
+            verificarPressaoPneus();
+            
+            const saveStatus = document.getElementById('saveStatus');
+            if (saveStatus) saveStatus.innerHTML = '🗑️ Dados limpos';
+            setTimeout(() => {
+                if (saveStatus) saveStatus.innerHTML = 'Dados salvos';
+            }, 2000);
+        }
+    }
+    
+    // ==================== CÁLCULO DE CONSUMO AUTOMÁTICO ====================
+    function calcularConsumoReal() {
+        const kmIni = parseFloat(document.getElementById('kmInicial').value);
+        const kmFin = parseFloat(document.getElementById('kmFinal').value);
+        const precoLitro = parseFloat(document.getElementById('precoCombustivel').value);
+        const valorGasto = parseFloat(document.getElementById('valorGasto').value);
+        
+        const distanciaSpan = document.getElementById('distanciaVal');
+        const litrosSpan = document.getElementById('litrosVal');
+        const consumoCalculadoSpan = document.getElementById('consumoCalculado');
+        const custoKmSpan = document.getElementById('custoKmVal');
+        const consumoMsg = document.getElementById('consumoMsg');
+        
+        if (isNaN(kmIni) || isNaN(kmFin) || isNaN(precoLitro) || isNaN(valorGasto) || 
+            precoLitro <= 0 || valorGasto <= 0 || kmIni === "" || kmFin === "") {
+            distanciaSpan.innerText = "0 km";
+            litrosSpan.innerText = "0.00 L";
+            consumoCalculadoSpan.innerText = "-- km/L";
+            custoKmSpan.innerText = "R$ 0.00";
+            consumoMsg.style.display = "none";
+            salvarTodosDados();
+            return;
+        }
+        
+        if (kmFin < kmIni) {
+            distanciaSpan.innerText = "Erro: KM final < inicial";
+            litrosSpan.innerText = "--";
+            consumoCalculadoSpan.innerText = "--";
+            custoKmSpan.innerText = "--";
+            consumoMsg.style.display = "block";
+            consumoMsg.innerHTML = "❌ KM final não pode ser menor que o inicial!";
+            salvarTodosDados();
+            return;
+        }
+        
+        const distancia = kmFin - kmIni;
+        const litros = valorGasto / precoLitro;
+        const consumo = distancia / litros;
+        const custoPorKm = valorGasto / distancia;
+        
+        distanciaSpan.innerText = distancia.toFixed(1) + " km";
+        litrosSpan.innerText = litros.toFixed(2) + " L";
+        
+        if (consumo > 0 && isFinite(consumo)) {
+            consumoCalculadoSpan.innerText = consumo.toFixed(2) + " km/L";
+            custoKmSpan.innerText = "R$ " + custoPorKm.toFixed(2);
+            
+            if (consumo < 8) {
+                consumoMsg.style.display = "block";
+                consumoMsg.innerHTML = "⚠️ Consumo elevado! Verifique manutenção (velas, filtros, pressão dos pneus).";
+                consumoMsg.className = "alert-msg";
+            } else if (consumo < 11) {
+                consumoMsg.style.display = "block";
+                consumoMsg.innerHTML = "📊 Consumo moderado. Pequenas melhorias podem aumentar economia.";
+                consumoMsg.className = "alert-msg";
+            } else if (consumo >= 14) {
+                consumoMsg.style.display = "block";
+                consumoMsg.innerHTML = "✅ Excelente consumo! Veículo está muito econômico.";
+                consumoMsg.className = "alert-msg success-msg";
+            } else {
+                consumoMsg.style.display = "none";
+            }
+        } else {
+            consumoCalculadoSpan.innerText = "Erro nos dados";
+            custoKmSpan.innerText = "R$ --";
+        }
+        salvarTodosDados();
+    }
+    
+    // ==================== ÓLEO ====================
+    function verificarOleo() {
+        const kmAtual = parseFloat(document.getElementById('kmAtualOleo').value);
+        const ultimaTroca = parseFloat(document.getElementById('ultimaTrocaOleo').value);
+        const nivel = document.getElementById('nivelOleo').value;
+        
+        const nivelSpan = document.getElementById('oleoNivel');
+        const kmTrocaSpan = document.getElementById('oleoKmTroca');
+        const saudeSpan = document.getElementById('oleoSaude');
+        const msgDiv = document.getElementById('oleoMsg');
+        
+        if (nivel === "ideal") nivelSpan.innerHTML = '<span class="good">✅ Ideal</span>';
+        else if (nivel === "medio") nivelSpan.innerHTML = '<span class="warning">⚠️ Médio</span>';
+        else nivelSpan.innerHTML = '<span class="danger">❌ Baixo</span>';
+        
+        let kmRodado = 0;
+        let msg = "";
+        
+        if (!isNaN(kmAtual) && !isNaN(ultimaTroca) && ultimaTroca > 0) {
+            if (kmAtual >= ultimaTroca) {
+                kmRodado = kmAtual - ultimaTroca;
+                kmTrocaSpan.innerHTML = kmRodado + " km";
+                
+                if (kmRodado >= 10000) {
+                    saudeSpan.innerHTML = '<span class="danger">🔴 Troca URGENTE!</span>';
+                    msg = "⚠️ ÓLEO: Mais de 10.000km desde a última troca! Troque imediatamente.";
+                } else if (kmRodado >= 7500) {
+                    saudeSpan.innerHTML = '<span class="warning">🟠 Troca próxima</span>';
+                    msg = "🔧 Óleo com mais de 7500km. Programe a troca em breve.";
+                } else {
+                    saudeSpan.innerHTML = '<span class="good">🟢 Óleo saudável</span>';
+                    msg = "✅ KM da troca dentro do recomendado.";
+                }
+            } else {
+                kmTrocaSpan.innerHTML = "KM inválido";
+                saudeSpan.innerHTML = '<span class="warning">⚠️ Verifique</span>';
+                msg = "⚠️ KM atual menor que a última troca? Confira os valores.";
+            }
+        } else {
+            kmTrocaSpan.innerHTML = "---";
+            saudeSpan.innerHTML = '<span class="warning">⚠️ Informe os KM</span>';
+        }
+        
+        if (nivel === "baixo") {
+            msg += " 🛢️ Nível do óleo BAIXO! Complete imediatamente.";
+        } else if (nivel === "medio") {
+            msg += " 📊 Nível médio, monitore semanalmente.";
+        }
+        
+        if (msg && msg !== "✅ KM da troca dentro do recomendado.") {
+            msgDiv.style.display = "block";
+            msgDiv.innerHTML = msg;
+        } else if (msg === "✅ KM da troca dentro do recomendado." && nivel === "ideal") {
+            msgDiv.style.display = "none";
+        } else {
+            msgDiv.style.display = "block";
+            msgDiv.innerHTML = msg || "✅ Óleo em boas condições.";
+        }
+        salvarTodosDados();
+        atualizarResumoAlertas();
+    }
+    
+    // ==================== PRESSÃO PNEUS ====================
+    function verificarPressaoPneus() {
+        const pneus = [
+            { id: document.getElementById('pressaoDE'), span: document.getElementById('pneuDE'), nome: "Dianteiro E" },
+            { id: document.getElementById('pressaoDD'), span: document.getElementById('pneuDD'), nome: "Dianteiro D" },
+            { id: document.getElementById('pressaoTE'), span: document.getElementById('pneuTE'), nome: "Traseiro E" },
+            { id: document.getElementById('pressaoTD'), span: document.getElementById('pneuTD'), nome: "Traseiro D" }
+        ];
+        const ideal = parseFloat(document.getElementById('pressaoIdeal').value) || 33;
+        const toleranciaPsi = parseFloat(document.getElementById('tolerancia').value) || 3;
+        
+        const alertas = [];
+        
+        pneus.forEach(pneu => {
+            const valor = parseFloat(pneu.id.value);
+            if (!isNaN(valor) && valor > 0) {
+                if (valor < ideal - toleranciaPsi) {
+                    pneu.span.innerHTML = `<span class="danger">${valor} ⬇️</span>`;
+                    alertas.push(`${pneu.nome} baixa (${valor} psi)`);
+                } else if (valor > ideal + toleranciaPsi) {
+                    pneu.span.innerHTML = `<span class="warning">${valor} ⬆️</span>`;
+                    alertas.push(`${pneu.nome} alta (${valor} psi)`);
+                } else {
+                    pneu.span.innerHTML = `<span class="good">${valor} ✅</span>`;
+                }
+            } else {
+                pneu.span.innerHTML = `<span class="warning">--</span>`;
+            }
+        });
+        
+        const msgDiv = document.getElementById('pneusMsg');
+        if (alertas.length > 0) {
+            msgDiv.style.display = "block";
+            msgDiv.innerHTML = "🔔 " + alertas.slice(0, 3).join(" | ");
+        } else {
+            msgDiv.style.display = "none";
+        }
+        salvarTodosDados();
+        atualizarResumoAlertas();
+    }
+    
+    // ==================== RESUMO GERAL ====================
+    function atualizarResumoAlertas() {
+        let alertas = [];
+        
+        const kmAtualOleoVal = parseFloat(document.getElementById('kmAtualOleo').value);
+        const ultimaTrocaVal = parseFloat(document.getElementById('ultimaTrocaOleo').value);
+        const nivelOleo = document.getElementById('nivelOleo').value;
+        
+        if (!isNaN(kmAtualOleoVal) && !isNaN(ultimaTrocaVal) && ultimaTrocaVal > 0) {
+            const kmRodOleo = kmAtualOleoVal - ultimaTrocaVal;
+            if (kmRodOleo >= 10000) alertas.push("🛢️ Troca de óleo URGENTE!");
+            else if (kmRodOleo >= 7500) alertas.push("🛢️ Troca de óleo em breve");
+        }
+        if (nivelOleo === "baixo") alertas.push("🛢️ Nível de óleo BAIXO!");
+        
+        const ideal = parseFloat(document.getElementById('pressaoIdeal').value) || 33;
+        const tol = parseFloat(document.getElementById('tolerancia').value) || 3;
+        const pneusPress = ['pressaoDE', 'pressaoDD', 'pressaoTE', 'pressaoTD'];
+        pneusPress.forEach(p => {
+            const val = parseFloat(document.getElementById(p).value);
+            if (!isNaN(val) && val > 0) {
+                if (val < ideal - tol) alertas.push(`🛞 Pneu ${p.replace('pressao','')} baixo`);
+                if (val > ideal + tol) alertas.push(`🛞 Pneu ${p.replace('pressao','')} alto`);
+            }
+        });
+        
+        const resumoDiv = document.getElementById('resumoAlertas');
+        if (alertas.length === 0) {
+            resumoDiv.innerHTML = "✅ Todos os sistemas em ordem! ✅<br>🔧 Veículo saudável";
+            resumoDiv.style.color = "#a2ffb0";
+        } else {
+            resumoDiv.innerHTML = alertas.map(a => `⚠️ ${a}`).join('<br>');
+            resumoDiv.style.color = "#ffc285";
+        }
+    }
+    
+    // ==================== EVENTOS E INICIALIZAÇÃO ====================
+    document.getElementById('calcConsumoBtn').addEventListener('click', calcularConsumoReal);
+    document.getElementById('verificarOleoBtn').addEventListener('click', verificarOleo);
+    document.getElementById('verificarPneusBtn').addEventListener('click', verificarPressaoPneus);
+    document.getElementById('clearDataBtn').addEventListener('click', limparTodosDados);
+    
+    const inputsConsumo = ['kmInicial', 'kmFinal', 'precoCombustivel', 'valorGasto'];
+    inputsConsumo.forEach(id => {
+        document.getElementById(id).addEventListener('input', calcularConsumoReal);
+    });
+    
+    const inputsOleo = ['kmAtualOleo', 'ultimaTrocaOleo', 'nivelOleo'];
+    inputsOleo.forEach(id => {
+        document.getElementById(id).addEventListener('input', verificarOleo);
+        document.getElementById(id).addEventListener('change', verificarOleo);
+    });
+    
+    const inputsPneus = ['pressaoDE', 'pressaoDD', 'pressaoTE', 'pressaoTD', 'pressaoIdeal', 'tolerancia'];
+    inputsPneus.forEach(id => {
+        document.getElementById(id).addEventListener('input', verificarPressaoPneus);
+    });
+    
+    // Carregar dados salvos e atualizar tudo
+    window.addEventListener('DOMContentLoaded', () => {
+        carregarTodosDados();
+        calcularConsumoReal();
+        verificarOleo();
+        verificarPressaoPneus();
+        atualizarResumoAlertas();
+    });
+</script>
+</body>
+</html>
