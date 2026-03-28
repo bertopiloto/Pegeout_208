@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>Monitor 208 | Preços Rápidos</title>
+<title>Monitor 208 | Litros Calculados</title>
 <style>
     * {
         margin: 0;
@@ -165,7 +165,6 @@
         border-color: #00e0ff;
     }
     
-    /* Botões de atalho decimal */
     .decimal-buttons {
         display: flex;
         gap: 4px;
@@ -224,7 +223,7 @@
         justify-content: center;
         gap: 3px;
     }
-    .good { color: #2effb0; text-shadow: 0 0 2px #00aa66; }
+    .good { color: #2effb0; }
     .warning { color: #ffb347; }
     .danger { color: #ff5a5a; }
 
@@ -250,6 +249,7 @@
         margin-top: 0;
     }
 
+    /* Resultado destacado */
     .result-block {
         background: #03070fcc;
         border-radius: 20px;
@@ -260,7 +260,7 @@
         display: flex;
         justify-content: space-between;
         font-size: 0.65rem;
-        padding: 4px 0;
+        padding: 5px 0;
         border-bottom: 1px dashed #2a3455;
     }
     .result-value {
@@ -269,7 +269,19 @@
     }
     .highlight-value {
         color: #ffd966;
-        font-size: 0.8rem;
+        font-size: 0.85rem;
+    }
+    .litros-destaque {
+        background: #00e0ff20;
+        border-radius: 12px;
+        padding: 4px 8px;
+        margin-top: 5px;
+        text-align: center;
+    }
+    .litros-grande {
+        font-size: 1rem;
+        font-weight: 800;
+        color: #2effb0;
     }
 
     .alert-msg {
@@ -311,6 +323,14 @@
         font-size: 0.6rem;
         color: #00e0ff;
     }
+    
+    .info-box {
+        background: #0f1422;
+        border-radius: 16px;
+        padding: 6px;
+        margin-top: 5px;
+        text-align: center;
+    }
 </style>
 </head>
 <body>
@@ -345,7 +365,7 @@
             <input type="number" id="precoCombustivel" class="input-mini" placeholder="5.79" step="0.01" inputmode="decimal">
         </div>
         
-        <!-- Botões de preço rápido (5.60 até 7.00) -->
+        <!-- Botões de preço rápido -->
         <div class="price-buttons" id="priceButtons">
             <button class="btn-price" data-price="5.60">R$ 5,60</button>
             <button class="btn-price" data-price="5.80">R$ 5,80</button>
@@ -375,13 +395,32 @@
         
         <div class="tip">💡 Dica: Toque nos botões de preço acima para selecionar rapidamente!</div>
         
+        <!-- RESULTADO DESTACADO COM LITROS -->
         <div class="result-block">
-            <div class="result-line"><span>📏 Distância</span><span class="result-value" id="distanciaVal">0 km</span></div>
-            <div class="result-line"><span>⛽ Litros</span><span class="result-value" id="litrosVal">0.00 L</span></div>
-            <div class="result-line"><span>📈 CONSUMO</span><span class="result-value highlight-value" id="consumoCalculado">-- km/L</span></div>
-            <div class="result-line"><span>💰 Custo/km</span><span class="result-value" id="custoKmVal">R$ 0.00</span></div>
+            <div class="result-line">
+                <span>📏 Distância percorrida</span>
+                <span class="result-value" id="distanciaVal">0 km</span>
+            </div>
+            <div class="result-line" style="background: #00e0ff10; border-radius: 8px; margin: 2px 0;">
+                <span>⛽ 🧪 LITROS ABASTECIDOS</span>
+                <span class="result-value highlight-value" id="litrosVal" style="font-size: 0.9rem;">0.00 L</span>
+            </div>
+            <div class="result-line">
+                <span>📈 CONSUMO (km/L)</span>
+                <span class="result-value" id="consumoCalculado">-- km/L</span>
+            </div>
+            <div class="result-line">
+                <span>💰 Custo por km</span>
+                <span class="result-value" id="custoKmVal">R$ 0.00</span>
+            </div>
         </div>
-        <button class="btn-action" id="calcConsumoBtn">🔄 CALCULAR</button>
+        
+        <!-- INFO ADICIONAL -->
+        <div class="info-box" id="infoAbastecimento">
+            💡 Com R$ <span id="gastoInfo">0,00</span> a R$ <span id="precoInfo">0,00</span>/L = <strong id="litrosInfo">0,00</strong> litros
+        </div>
+        
+        <button class="btn-action" id="calcConsumoBtn">🔄 CALCULAR CONSUMO</button>
         <div id="consumoMsg" class="alert-msg" style="display: none;"></div>
     </div>
 
@@ -461,13 +500,13 @@
             <button class="btn-action btn-clear" id="clearDataBtn">🗑️ LIMPAR DADOS</button>
         </div>
         <div style="font-size:0.45rem; text-align:center; color:#5c6a8a; margin-top:6px;">
-            💾 Dados salvos | 🔘 Toque no preço desejado
+            💾 Dados salvos | ⛽ Litros calculados automaticamente
         </div>
     </div>
 </div>
 
 <script>
-    // ==================== BOTÕES DE PREÇO RÁPIDO ====================
+    // ==================== BOTÕES DE PREÇO ====================
     function setupPriceButtons() {
         const priceButtons = document.querySelectorAll('.btn-price');
         const precoInput = document.getElementById('precoCombustivel');
@@ -478,32 +517,20 @@
                 e.preventDefault();
                 const price = this.getAttribute('data-price');
                 precoInput.value = price;
-                
-                // Atualizar display
                 priceDisplay.innerHTML = `💰 Preço atual: R$ ${price}`;
-                
-                // Remover destaque de todos
                 priceButtons.forEach(b => b.classList.remove('btn-price-active'));
-                // Destacar o selecionado
                 this.classList.add('btn-price-active');
-                
-                // Disparar evento para recalcular
                 const event = new Event('input', { bubbles: true });
                 precoInput.dispatchEvent(event);
-                
-                // Salvar automaticamente
                 salvarTodosDados();
             });
         });
         
-        // Monitorar mudanças manuais no input
         precoInput.addEventListener('input', function() {
             const val = this.value;
             if (val) {
                 priceDisplay.innerHTML = `💰 Preço atual: R$ ${val}`;
-                // Remover destaque dos botões
                 priceButtons.forEach(b => b.classList.remove('btn-price-active'));
-                // Se o valor corresponder a algum botão, destaca
                 priceButtons.forEach(btn => {
                     if (btn.getAttribute('data-price') === val) {
                         btn.classList.add('btn-price-active');
@@ -512,6 +539,7 @@
             } else {
                 priceDisplay.innerHTML = `💰 Preço atual: R$ --`;
             }
+            calcularConsumoReal();
         });
     }
     
@@ -526,23 +554,13 @@
                 const input = document.getElementById(targetId);
                 if (input) {
                     let currentValue = input.value;
-                    
                     if (valueToAdd === '.') {
                         if (!currentValue.includes('.')) {
-                            if (currentValue === '') {
-                                input.value = '0.';
-                            } else {
-                                input.value = currentValue + '.';
-                            }
+                            input.value = currentValue === '' ? '0.' : currentValue + '.';
                         }
                     } else if (valueToAdd === '0' || valueToAdd === '00') {
-                        if (currentValue === '' || currentValue === '0') {
-                            input.value = valueToAdd;
-                        } else {
-                            input.value = currentValue + valueToAdd;
-                        }
+                        input.value = currentValue === '' || currentValue === '0' ? valueToAdd : currentValue + valueToAdd;
                     }
-                    
                     const event = new Event('input', { bubbles: true });
                     input.dispatchEvent(event);
                     input.focus();
@@ -553,55 +571,36 @@
     
     // ==================== LOCALSTORAGE ====================
     const STORAGE_KEYS = {
-        kmInicial: 'consumo_kmInicial',
-        kmFinal: 'consumo_kmFinal',
-        precoCombustivel: 'consumo_preco',
-        valorGasto: 'consumo_valorGasto',
-        kmAtualOleo: 'oleo_kmAtual',
-        ultimaTrocaOleo: 'oleo_ultimaTroca',
-        nivelOleo: 'oleo_nivel',
-        pressaoDE: 'pneu_DE',
-        pressaoDD: 'pneu_DD',
-        pressaoTE: 'pneu_TE',
-        pressaoTD: 'pneu_TD',
-        pressaoIdeal: 'pneu_ideal',
-        tolerancia: 'pneu_tolerancia'
+        kmInicial: 'c_kmInicial', kmFinal: 'c_kmFinal', precoCombustivel: 'c_preco', valorGasto: 'c_gasto',
+        kmAtualOleo: 'o_kmAtual', ultimaTrocaOleo: 'o_ultima', nivelOleo: 'o_nivel',
+        pressaoDE: 'p_de', pressaoDD: 'p_dd', pressaoTE: 'p_te', pressaoTD: 'p_td',
+        pressaoIdeal: 'p_ideal', tolerancia: 'p_tol'
     };
     
     function salvarTodosDados() {
         for (const [id, key] of Object.entries(STORAGE_KEYS)) {
-            const elemento = document.getElementById(id);
-            if (elemento) {
-                localStorage.setItem(key, elemento.value);
-            }
+            const el = document.getElementById(id);
+            if (el) localStorage.setItem(key, el.value);
         }
         const saveStatus = document.getElementById('saveStatus');
         if (saveStatus) {
-            saveStatus.innerHTML = '💾 Salvo!';
-            setTimeout(() => {
-                if (saveStatus) saveStatus.innerHTML = 'Dados salvos';
-            }, 1500);
+            saveStatus.innerHTML = '💾';
+            setTimeout(() => { if(saveStatus) saveStatus.innerHTML = 'Dados salvos'; }, 800);
         }
     }
     
     function carregarTodosDados() {
         for (const [id, key] of Object.entries(STORAGE_KEYS)) {
-            const elemento = document.getElementById(id);
-            if (elemento) {
-                const valorSalvo = localStorage.getItem(key);
-                if (valorSalvo !== null && valorSalvo !== "") {
-                    elemento.value = valorSalvo;
-                }
+            const el = document.getElementById(id);
+            if (el) {
+                const val = localStorage.getItem(key);
+                if (val !== null && val !== "") el.value = val;
             }
         }
-        // Atualizar display do preço
         const precoInput = document.getElementById('precoCombustivel');
-        const priceDisplay = document.getElementById('currentPriceDisplay');
         if (precoInput.value) {
-            priceDisplay.innerHTML = `💰 Preço atual: R$ ${precoInput.value}`;
-            // Destacar botão correspondente
-            const priceButtons = document.querySelectorAll('.btn-price');
-            priceButtons.forEach(btn => {
+            document.getElementById('currentPriceDisplay').innerHTML = `💰 Preço atual: R$ ${precoInput.value}`;
+            document.querySelectorAll('.btn-price').forEach(btn => {
                 if (btn.getAttribute('data-price') === precoInput.value) {
                     btn.classList.add('btn-price-active');
                 } else {
@@ -612,10 +611,8 @@
     }
     
     function limparTodosDados() {
-        if (confirm("⚠️ Limpar TODOS os dados?\n\nEssa ação não pode ser desfeita.")) {
-            for (const key of Object.values(STORAGE_KEYS)) {
-                localStorage.removeItem(key);
-            }
+        if (confirm("⚠️ Limpar TODOS os dados?")) {
+            for (const key of Object.values(STORAGE_KEYS)) localStorage.removeItem(key);
             document.getElementById('kmInicial').value = '';
             document.getElementById('kmFinal').value = '';
             document.getElementById('precoCombustivel').value = '';
@@ -629,17 +626,15 @@
             document.getElementById('pressaoTD').value = '';
             document.getElementById('pressaoIdeal').value = '33';
             document.getElementById('tolerancia').value = '3';
-            
             document.getElementById('currentPriceDisplay').innerHTML = '💰 Preço atual: R$ --';
             document.querySelectorAll('.btn-price').forEach(btn => btn.classList.remove('btn-price-active'));
-            
             calcularConsumoReal();
             verificarOleo();
             verificarPressaoPneus();
         }
     }
     
-    // ==================== CÁLCULOS ====================
+    // ==================== CÁLCULO PRINCIPAL (COM LITROS DESTACADOS) ====================
     function calcularConsumoReal() {
         const kmIni = parseFloat(document.getElementById('kmInicial').value);
         const kmFin = parseFloat(document.getElementById('kmFinal').value);
@@ -651,6 +646,9 @@
         const consumoCalculadoSpan = document.getElementById('consumoCalculado');
         const custoKmSpan = document.getElementById('custoKmVal');
         const consumoMsg = document.getElementById('consumoMsg');
+        const gastoInfo = document.getElementById('gastoInfo');
+        const precoInfo = document.getElementById('precoInfo');
+        const litrosInfo = document.getElementById('litrosInfo');
         
         if (isNaN(kmIni) || isNaN(kmFin) || isNaN(precoLitro) || isNaN(valorGasto) || 
             precoLitro <= 0 || valorGasto <= 0 || kmIni === "" || kmFin === "") {
@@ -658,6 +656,9 @@
             litrosSpan.innerText = "0.00 L";
             consumoCalculadoSpan.innerText = "-- km/L";
             custoKmSpan.innerText = "R$ 0.00";
+            gastoInfo.innerText = "0,00";
+            precoInfo.innerText = "0,00";
+            litrosInfo.innerText = "0,00";
             consumoMsg.style.display = "none";
             salvarTodosDados();
             return;
@@ -680,12 +681,16 @@
         const custoPorKm = valorGasto / distancia;
         
         distanciaSpan.innerText = distancia.toFixed(1) + " km";
-        litrosSpan.innerText = litros.toFixed(2) + " L";
+        litrosSpan.innerHTML = litros.toFixed(2) + " L";
+        consumoCalculadoSpan.innerText = consumo.toFixed(2) + " km/L";
+        custoKmSpan.innerText = "R$ " + custoPorKm.toFixed(2);
+        
+        // Atualizar info box
+        gastoInfo.innerText = valorGasto.toFixed(2);
+        precoInfo.innerText = precoLitro.toFixed(2);
+        litrosInfo.innerText = litros.toFixed(2);
         
         if (consumo > 0 && isFinite(consumo)) {
-            consumoCalculadoSpan.innerText = consumo.toFixed(2) + " km/L";
-            custoKmSpan.innerText = "R$ " + custoPorKm.toFixed(2);
-            
             if (consumo < 8) {
                 consumoMsg.style.display = "block";
                 consumoMsg.innerHTML = "⚠️ Consumo elevado! Verifique manutenção.";
@@ -707,11 +712,11 @@
     
     function verificarOleo() {
         const kmAtual = parseFloat(document.getElementById('kmAtualOleo').value);
-        const ultimaTroca = parseFloat(document.getElementById('ultimaTrocaOleo').value);
+        const ultima = parseFloat(document.getElementById('ultimaTrocaOleo').value);
         const nivel = document.getElementById('nivelOleo').value;
         
         const nivelSpan = document.getElementById('oleoNivel');
-        const kmTrocaSpan = document.getElementById('oleoKmTroca');
+        const kmSpan = document.getElementById('oleoKmTroca');
         const saudeSpan = document.getElementById('oleoSaude');
         const msgDiv = document.getElementById('oleoMsg');
         
@@ -720,40 +725,27 @@
         else nivelSpan.innerHTML = '<span class="danger">❌ Baixo</span>';
         
         let msg = "";
-        
-        if (!isNaN(kmAtual) && !isNaN(ultimaTroca) && ultimaTroca > 0) {
-            if (kmAtual >= ultimaTroca) {
-                const kmRod = kmAtual - ultimaTroca;
-                kmTrocaSpan.innerHTML = kmRod + " km";
-                
-                if (kmRod >= 10000) {
-                    saudeSpan.innerHTML = '<span class="danger">🔴 URGENTE!</span>';
-                    msg = "⚠️ Troca de óleo URGENTE!";
-                } else if (kmRod >= 7500) {
-                    saudeSpan.innerHTML = '<span class="warning">🟠 Em breve</span>';
-                    msg = "🔧 Troca de óleo em breve";
-                } else {
-                    saudeSpan.innerHTML = '<span class="good">🟢 OK</span>';
-                }
+        if (!isNaN(kmAtual) && !isNaN(ultima) && ultima > 0 && kmAtual >= ultima) {
+            const kmRod = kmAtual - ultima;
+            kmSpan.innerHTML = kmRod + " km";
+            if (kmRod >= 10000) {
+                saudeSpan.innerHTML = '<span class="danger">🔴 URGENTE!</span>';
+                msg = "⚠️ Troca de óleo URGENTE!";
+            } else if (kmRod >= 7500) {
+                saudeSpan.innerHTML = '<span class="warning">🟠 Em breve</span>';
+                msg = "🔧 Troca de óleo em breve";
             } else {
-                kmTrocaSpan.innerHTML = "Inválido";
-                saudeSpan.innerHTML = '<span class="warning">⚠️</span>';
+                saudeSpan.innerHTML = '<span class="good">🟢 OK</span>';
             }
         } else {
-            kmTrocaSpan.innerHTML = "---";
+            kmSpan.innerHTML = "---";
             saudeSpan.innerHTML = '<span class="warning">⚠️</span>';
         }
-        
         if (nivel === "baixo") msg = "🛢️ Nível de óleo BAIXO!";
-        
-        if (msg) {
-            msgDiv.style.display = "block";
-            msgDiv.innerHTML = msg;
-        } else {
-            msgDiv.style.display = "none";
-        }
+        msgDiv.style.display = msg ? "block" : "none";
+        if (msg) msgDiv.innerHTML = msg;
         salvarTodosDados();
-        atualizarResumoAlertas();
+        atualizarResumo();
     }
     
     function verificarPressaoPneus() {
@@ -764,67 +756,47 @@
             { id: document.getElementById('pressaoTD'), span: document.getElementById('pneuTD') }
         ];
         const ideal = parseFloat(document.getElementById('pressaoIdeal').value) || 33;
-        const toleranciaPsi = parseFloat(document.getElementById('tolerancia').value) || 3;
+        const tol = parseFloat(document.getElementById('tolerancia').value) || 3;
+        let alertas = 0;
         
-        let alertasCount = 0;
-        
-        pneus.forEach(pneu => {
-            const valor = parseFloat(pneu.id.value);
-            if (!isNaN(valor) && valor > 0) {
-                if (valor < ideal - toleranciaPsi) {
-                    pneu.span.innerHTML = `<span class="danger">${valor}↓</span>`;
-                    alertasCount++;
-                } else if (valor > ideal + toleranciaPsi) {
-                    pneu.span.innerHTML = `<span class="warning">${valor}↑</span>`;
-                    alertasCount++;
-                } else {
-                    pneu.span.innerHTML = `<span class="good">${valor}</span>`;
-                }
-            } else {
-                pneu.span.innerHTML = `<span class="warning">--</span>`;
-            }
+        pneus.forEach(p => {
+            const val = parseFloat(p.id.value);
+            if (!isNaN(val) && val > 0) {
+                if (val < ideal - tol) { p.span.innerHTML = `<span class="danger">${val}↓</span>`; alertas++; }
+                else if (val > ideal + tol) { p.span.innerHTML = `<span class="warning">${val}↑</span>`; alertas++; }
+                else { p.span.innerHTML = `<span class="good">${val}</span>`; }
+            } else { p.span.innerHTML = `<span class="warning">--</span>`; }
         });
         
         const msgDiv = document.getElementById('pneusMsg');
-        if (alertasCount > 0) {
-            msgDiv.style.display = "block";
-            msgDiv.innerHTML = `⚠️ ${alertasCount} pneu(s) fora do ideal`;
-        } else {
-            msgDiv.style.display = "none";
-        }
+        msgDiv.style.display = alertas > 0 ? "block" : "none";
+        if (alertas > 0) msgDiv.innerHTML = `⚠️ ${alertas} pneu(s) fora do ideal`;
         salvarTodosDados();
-        atualizarResumoAlertas();
+        atualizarResumo();
     }
     
-    function atualizarResumoAlertas() {
+    function atualizarResumo() {
         let alertas = [];
-        
         const kmAtual = parseFloat(document.getElementById('kmAtualOleo').value);
         const ultima = parseFloat(document.getElementById('ultimaTrocaOleo').value);
         const nivel = document.getElementById('nivelOleo').value;
-        
-        if (!isNaN(kmAtual) && !isNaN(ultima) && ultima > 0 && (kmAtual - ultima) >= 10000) {
-            alertas.push("🛢️ Troca óleo");
-        }
+        if (!isNaN(kmAtual) && !isNaN(ultima) && ultima > 0 && (kmAtual - ultima) >= 10000) alertas.push("🛢️ Troca óleo");
         if (nivel === "baixo") alertas.push("🛢️ Nível baixo");
         
         const ideal = parseFloat(document.getElementById('pressaoIdeal').value) || 33;
         const tol = parseFloat(document.getElementById('tolerancia').value) || 3;
-        const pneusPress = ['pressaoDE', 'pressaoDD', 'pressaoTE', 'pressaoTD'];
-        pneusPress.forEach(p => {
+        ['pressaoDE','pressaoDD','pressaoTE','pressaoTD'].forEach(p => {
             const val = parseFloat(document.getElementById(p).value);
-            if (!isNaN(val) && val > 0 && (val < ideal - tol || val > ideal + tol)) {
-                alertas.push("🛞 Pressão");
-            }
+            if (!isNaN(val) && val > 0 && (val < ideal - tol || val > ideal + tol)) alertas.push("🛞 Pressão");
         });
         
-        const resumoDiv = document.getElementById('resumoAlertas');
+        const resumo = document.getElementById('resumoAlertas');
         if (alertas.length === 0) {
-            resumoDiv.innerHTML = "✅ Tudo OK!";
-            resumoDiv.style.color = "#a2ffb0";
+            resumo.innerHTML = "✅ Tudo OK!";
+            resumo.style.color = "#a2ffb0";
         } else {
-            resumoDiv.innerHTML = alertas.slice(0, 3).join(' • ');
-            resumoDiv.style.color = "#ffc285";
+            resumo.innerHTML = alertas.slice(0,3).join(' • ');
+            resumo.style.color = "#ffc285";
         }
     }
     
@@ -834,19 +806,13 @@
     document.getElementById('verificarPneusBtn').addEventListener('click', verificarPressaoPneus);
     document.getElementById('clearDataBtn').addEventListener('click', limparTodosDados);
     
-    const inputsConsumo = ['kmInicial', 'kmFinal', 'precoCombustivel', 'valorGasto'];
-    inputsConsumo.forEach(id => {
+    ['kmInicial', 'kmFinal', 'precoCombustivel', 'valorGasto'].forEach(id => {
         document.getElementById(id).addEventListener('input', calcularConsumoReal);
     });
-    
-    const inputsOleo = ['kmAtualOleo', 'ultimaTrocaOleo', 'nivelOleo'];
-    inputsOleo.forEach(id => {
+    ['kmAtualOleo', 'ultimaTrocaOleo', 'nivelOleo'].forEach(id => {
         document.getElementById(id).addEventListener('input', verificarOleo);
-        document.getElementById(id).addEventListener('change', verificarOleo);
     });
-    
-    const inputsPneus = ['pressaoDE', 'pressaoDD', 'pressaoTE', 'pressaoTD', 'pressaoIdeal', 'tolerancia'];
-    inputsPneus.forEach(id => {
+    ['pressaoDE', 'pressaoDD', 'pressaoTE', 'pressaoTD', 'pressaoIdeal', 'tolerancia'].forEach(id => {
         document.getElementById(id).addEventListener('input', verificarPressaoPneus);
     });
     
